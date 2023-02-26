@@ -1,0 +1,23 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "clean": "cd .output/server && rm -rf node_modules && yarn install",
+    "deploy-preview": "NITRO_PRESET=firebase yarn build && yarn clean && firebase emulators:start",
+    "deploy-staging": "NITRO_PRESET=firebase yarn build && yarn clean && firebase hosting:channel:deploy staging-nuxt --expires 2d",
+    "deploy": "NITRO_PRESET=firebase yarn build && yarn clean && firebase deploy --only functions:server,hosting"
+  },
+  "devDependencies": {
+    "nuxt": "^3.2.2"
+  },
+  "dependencies": {
+    "bulma": "^0.9.4",
+    "firebase": "^9.17.1",
+    "firebase-admin": "^11.5.0",
+    "firebase-functions": "^4.2.1"
+  }
+}

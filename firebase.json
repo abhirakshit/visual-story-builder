@@ -1,0 +1,16 @@
+{
+  "functions": {
+    "source": ".output/server"
+  },
+  "hosting": {
+    "public": ".output/public",
+    "target": "therapy-scenario-builder",
+    "cleanUrls": true,
+    "rewrites": [{"source":  "**", "function":  "server"}],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}

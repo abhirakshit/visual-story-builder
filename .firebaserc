@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "therapy-scenario-builder"
+  },
+     "targets": {
+       "therapy-scenario-builder": {
+         "hosting": {
+           "therapy-scenario-builder": [
+             "therapy-scenario-builder"
+           ]
+         }
+       }
+     }
+}

@@ -52,13 +52,12 @@ export const initUser = async () => {
                     console.log(error);
                 });
             console.log('Routing...')
-            // router.push("/");
+            router.push("/stories");
         } else {
             // User is signed out
             // ...
             console.log('Auth Signed Out', user)
-
-            // router.push("/");
+            router.push("/");
             // router.push("/auth/login");
         }
 

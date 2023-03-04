@@ -42,7 +42,7 @@ export const initUser = async () => {
                     if (idTokenResult.claims.role == 'admin') {
                         // Show admin UI.
                         // showAdminUI();
-                        console.log(idTokenResult.claims)
+                        // console.log(idTokenResult.claims)
                     } else {
                         // Show regular user UI.
                         // showRegularUI();

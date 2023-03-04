@@ -1,7 +1,7 @@
 // // https://www.youtube.com/watch?v=NoJa7FKqmhU
 //https://www.youtube.com/watch?app=desktop&v=NoJa7FKqmhU
 import { initializeApp, getApps } from "firebase/app"
-import { getFirestore } from "firebase/firestore"
+import { getFirestore, initializeFirestore } from "firebase/firestore"
 import { initializeAuth, browserLocalPersistence,
     browserSessionPersistence, indexedDBLocalPersistence, getAuth } from "firebase/auth";
 
@@ -30,6 +30,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     nuxtApp.vueApp.provide('auth', auth)
     nuxtApp.provide('auth', auth)
 
-    const db = getFirestore(firebaseApp, {})
+    // const db = getFirestore(firebaseApp, {})
+    const db = initializeFirestore(firebaseApp, {})
     nuxtApp.provide('fireDB', db)
 })

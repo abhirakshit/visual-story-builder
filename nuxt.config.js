@@ -20,7 +20,7 @@ export default defineNuxtConfig({
         }
     },
     plugins: [
-        { src: "~/plugins/vueKonva.client", mode: 'client' }
+        // { src: "~/plugins/vueKonva.client", mode: 'client' }
     ],
     build: {
         transpile: ['konva']

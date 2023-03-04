@@ -86,9 +86,8 @@
 import {signOutUser} from "../composables/useFirebase";
 
 const firebaseUser = useFirebaseUser();
-console.log(firebaseUser)
+// console.log('Nav', firebaseUser.email)
 const signOut = () => {
-  console.log('hello')
   signOutUser();
 };
 </script>

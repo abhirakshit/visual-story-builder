@@ -9,7 +9,8 @@ export default defineNuxtConfig({
         // CSS file in the project
         '@/assets/css/app.css',
         // SCSS file in the project
-        '@/assets/css/admin.css'
+        '@/assets/css/admin.css',
+        '@fortawesome/fontawesome-svg-core/styles.css'
     ],
     runtimeConfig: {
         FIREBASE_API_KEY: process.env.FIREBASE_API_KEY,
@@ -22,6 +23,17 @@ export default defineNuxtConfig({
     plugins: [
         // { src: "~/plugins/vueKonva.client", mode: 'client' }
     ],
+    buildModules: [
+        '@nuxtjs/style-resources',
+        '@nuxtjs/fontawesome',
+    ],
+    fontawesome: {
+        component: 'fa',
+        icons: {
+            solid: true,
+            brands: true
+        }
+    },
     build: {
         transpile: ['konva']
     },

@@ -10,6 +10,17 @@
           </ul>
         </nav>
 
+        <div class="box">
+          <button class="button m-1 is-outlined">
+            <font-awesome-icon icon="circle" />
+            &nbsp;Event
+          </button>
+          <button class="button m-1 is-info is-outlined"><font-awesome-icon icon="square" />&nbsp;Reaction</button>
+          <button class="button m-1 is-outlined"><font-awesome-icon icon="arrow-right" />&nbsp;Connection</button>
+          <button class="button m-1 is-outlined">
+            <font-awesome-icon icon="circle" /> &nbsp;Mental Representation
+          </button>
+        </div>
         <div class="columns">
           <div class="column is-three-quarters">
             <div class="box">

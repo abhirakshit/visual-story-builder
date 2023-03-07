@@ -12,9 +12,13 @@
     "deploy": "NITRO_PRESET=firebase yarn build && yarn clean && firebase deploy --only functions:server,hosting"
   },
   "devDependencies": {
+    "@fortawesome/free-brands-svg-icons": "^6.3.0",
+    "@fortawesome/free-solid-svg-icons": "^6.3.0",
     "nuxt": "^3.2.2"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.3.0",
+    "@fortawesome/vue-fontawesome": "^3.0.3",
     "bulma": "^0.9.4",
     "firebase": "^9.17.1",
     "firebase-admin": "^11.5.0",

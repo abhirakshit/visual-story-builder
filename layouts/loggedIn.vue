@@ -3,8 +3,9 @@
     <nav class="navbar" role="navigation" aria-label="main navigation">
       <div class="container">
         <div class="navbar-brand">
-          <a class="navbar-item" href="/">
-            <img src="/logo-black.svg" width="100" height="28">
+          <a class="navbar-item is-size-5" href="/">
+<!--            <img src="/logo-black.svg" width="100" height="28">-->
+            Indra's Net Story Builder
             <!--          <img src="https://bulma.io/images/bulma-logo.png" width="112" height="28">-->
           </a>
 
@@ -32,8 +33,9 @@
           <div class="navbar-end">
             <div class="navbar-item has-dropdown is-hoverable">
               <a class="navbar-link">
-                <i class="fa fa-user"></i>
+<!--                <i class="fa fa-user"></i>-->
                 <client-only>
+                <font-awesome-icon icon="user" />&nbsp;
                 <span>
                   Welcome {{ firebaseUser.email }}
                 </span>

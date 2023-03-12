@@ -2,8 +2,9 @@
   <div>
     <nav class="navbar" role="navigation" aria-label="main navigation">
       <div class="navbar-brand">
-        <a class="navbar-item" href="https://bulma.io">
-          <img src="/logo-black.svg" width="112" height="28">
+        <a class="navbar-item is-size-5" href="https://bulma.io">
+<!--          <img src="/logo-black.svg" width="112" height="28">-->
+          Indra's Net Story Builder
 <!--          <img src="https://bulma.io/images/bulma-logo.png" width="112" height="28">-->
         </a>
 

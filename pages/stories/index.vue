@@ -63,7 +63,7 @@ import {
 
 onMounted(async () => {
   const {$fireDB} = useNuxtApp()
-  console.log('mounted', firebaseUser.value.uid, $fireDB)
+  // console.log('mounted', firebaseUser.value.uid, $fireDB)
   const querySnapshot = await getDocs(query(collection($fireDB, `users/${firebaseUser.value.uid}/stories`)));
   stories.value = querySnapshot.docs.map((documentSnapshot) => {
     return {...documentSnapshot.data(), id: documentSnapshot.id}

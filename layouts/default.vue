@@ -63,9 +63,9 @@
       </div>
     </nav>
     <section>
-      <column>
+      <div>
         <slot />
-      </column>
+      </div>
     </section>
     <footer class="footer">
       <div class="content has-text-centered">

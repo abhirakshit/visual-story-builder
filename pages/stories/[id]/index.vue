@@ -1,31 +1,35 @@
 <template>
   <div>
     <NuxtLayout name="logged-in">
-<!--    <NuxtLayout>-->
+      <!--    <NuxtLayout>-->
       <AddMenu></AddMenu>
       <div>
         <nav class="breadcrumb" aria-label="breadcrumbs">
           <ul>
-            <li><NuxtLink>Home</NuxtLink></li>
-            <li><NuxtLink to="/stories">Stories</NuxtLink></li>
-            <li class="is-active"><a href="#" aria-current="page">{{ story? story.title:"" }}</a></li>
+            <li>
+              <NuxtLink>Home</NuxtLink>
+            </li>
+            <li>
+              <NuxtLink to="/stories">Stories</NuxtLink>
+            </li>
+            <li class="is-active"><a href="#" aria-current="page">{{ story ? story.title : "" }}</a></li>
           </ul>
         </nav>
 
-<!--        <div class="box">-->
-<!--          <button class="button m-1 is-outlined">-->
-<!--            <font-awesome-icon icon="circle" />-->
-<!--            &nbsp;Event-->
-<!--          </button>-->
-<!--          <button class="button m-1 is-info is-outlined">-->
-<!--            <font-awesome-icon icon="square" />&nbsp;Reaction</button>-->
-<!--          <button class="button m-1 is-outlined">-->
-<!--            <font-awesome-icon icon="arrow-right" />&nbsp;Connection</button>-->
-<!--          <button class="button m-1 is-outlined">-->
-<!--            <font-awesome-icon icon="circle" /> &nbsp;Mental Representation-->
-<!--          </button>-->
-<!--          <button id='toggleBorder'>Toggle border rect</button>-->
-<!--        </div>-->
+        <!--        <div class="box">-->
+        <!--          <button class="button m-1 is-outlined">-->
+        <!--            <font-awesome-icon icon="circle" />-->
+        <!--            &nbsp;Event-->
+        <!--          </button>-->
+        <!--          <button class="button m-1 is-info is-outlined">-->
+        <!--            <font-awesome-icon icon="square" />&nbsp;Reaction</button>-->
+        <!--          <button class="button m-1 is-outlined">-->
+        <!--            <font-awesome-icon icon="arrow-right" />&nbsp;Connection</button>-->
+        <!--          <button class="button m-1 is-outlined">-->
+        <!--            <font-awesome-icon icon="circle" /> &nbsp;Mental Representation-->
+        <!--          </button>-->
+        <!--          <button id='toggleBorder'>Toggle border rect</button>-->
+        <!--        </div>-->
         <div class="columns">
           <div class="column is-three-quarters">
             <div class="box">
@@ -35,7 +39,7 @@
                 </div>
                 <div class="column is-one-quarter">
                   <button class="button m-1 is-outlined is-pulled-right" @click="addScenarioToStage">
-                    <font-awesome-icon icon="plus" />&nbsp;Add Scenario
+                    <font-awesome-icon icon="plus"/>&nbsp;Add Scenario
                   </button>
                 </div>
               </div>
@@ -58,6 +62,7 @@
 <script setup>
 import {collection, getDocs, getDoc, doc, query, addDoc, onSnapshot} from "firebase/firestore";
 import AddMenu from "../../../components/AddMenu";
+
 definePageMeta({
   middleware: ["auth"],
   layout: false
@@ -134,7 +139,7 @@ const getOffsetPointerPos = (clientX, clientY) => {
   console.log({clientX, clientY})
   // let offset = 84
   let offset = 0
-  return {x: clientX-offset, y: clientY-offset}
+  return {x: clientX - offset, y: clientY - offset}
 }
 const setupAddMenu = () => {
   // https://konvajs.org/docs/sandbox/Canvas_Context_Menu.html
@@ -239,17 +244,140 @@ const fitStageIntoParentContainer = () => {
 
   stage.width(sceneWidth * scale);
   stage.height(sceneHeight * scale);
-  stage.scale({ x: scale, y: scale });
+  stage.scale({x: scale, y: scale});
 }
 
 const addScenarioToStage = async () => {
   await addDoc(
       collection($fireDB, `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios`),
-      {title: 'New Scenario', description: 'New Description'})
+      {
+        title: 'New Scenario',
+        description: 'New Description',
+        events: [
+          {
+            id: 'evt1',
+            type: 'general',
+            description: 'Evt Desc',
+            timeline: 'past',
+          },
+          {
+            id: 'evt2',
+            type: 'catalysing',
+            description: 'Cat Evt Desc',
+            timeline: 'current'
+          }
+        ],
+        mentalState: {
+          id: 'ms',
+          title: 'Mental State',
+          description: '',
+        },
+        reaction: {id: 'rctn'},
+        connectors: [
+          {id: 'cid1', startTargetId: 'evt1', endTargetId: 'rctn', type: 'excitation'},
+          {id: 'cid2', startTargetId: 'evt2', endTargetId: 'rctn', type: 'catalysing'},
+          {id: 'cid3', startTargetId: 'rctn', endTargetId: 'ms', type: 'generation'},
+        ]
+      })
   redraw();
 }
 
 const scenarioGroupMapping = [];
+const setupEvents = (scenario, group, borderGroupBox) => {
+  let eventLocY = 50, eventLocX = 150
+  scenario.events.map((evt) => {
+    // get evt settings
+    eventLocY += 50;
+    let wedge = new Konva.Wedge({
+      x: eventLocX,
+      y: eventLocY,
+      radius: 30,
+      angle: 60,
+      fill: 'yellow',
+      stroke: 'black',
+      strokeWidth: 1,
+      rotation: -120,
+    });
+
+    //set id
+    wedge.id = evt.id
+
+    //add to group
+    group.add(wedge);
+
+    /*
+    ** Any shape in the group must call the moveBorder fn in its dragmove listener.
+    */
+    wedge.on('dragmove', function () {
+      borderGroupBox.moveBorder()
+    })
+
+    wedge.on('click', function (evt) {
+      evt.cancelBubble = true;
+      console.log('Event Selected')
+    })
+  })
+
+  //Create Reaction Box
+  let rect = new Konva.Rect({
+    x: eventLocX + 100,
+    y: eventLocY - 50,
+    width: 20,
+    height: 20,
+    fill: 'blue',
+    shadowBlur: 2,
+    cornerRadius: 2,
+  });
+  group.add(rect)
+  rect.on('dragmove', function () {
+    borderGroupBox.moveBorder()
+  })
+  rect.id = scenario.reaction.id
+
+  //Create Mental State
+  let circle = new Konva.Circle({
+    x: eventLocX + 200,
+    y: eventLocY - 50,
+    radius: 15,
+    fill: 'red',
+    stroke: 'black',
+    strokeWidth: 4,
+  });
+  group.add(circle)
+  circle.on('dragmove', function () {
+    borderGroupBox.moveBorder()
+  })
+  circle.id = scenario.mentalState.id
+
+  // Create Connectors
+  scenario.connectors.map((evt) => {
+    eventLocY += 50;
+    // let wedge = new Konva.Wedge({
+    //   x: eventLocX,
+    //   y: eventLocY,
+    //   radius: 30,
+    //   angle: 60,
+    //   fill: 'yellow',
+    //   stroke: 'black',
+    //   strokeWidth: 1,
+    //   rotation: -120,
+    // });
+
+    //set id
+    // wedge.id = evt.id
+
+    //add to group
+    // group.add(wedge);
+
+    /*
+    ** Any shape in the group must call the moveBorder fn in its dragmove listener.
+    */
+    // wedge.on('dragmove', function () {
+    //   borderGroupBox.moveBorder()
+    // })
+  })
+}
+
 const setupScenarios = () => {
   // for each scenario setup canvas
   if (!scenarios.value) {
@@ -267,45 +395,43 @@ const setupScenarios = () => {
       draggable: true
     });
     group.id = scenario.id
-    // setup scenario details in the group
-    let circle = new Konva.Circle({ x: 300, y: 100, radius: 50, fill: 'cyan', draggable: 'true'})
-    let star = new Konva.Star({ x: 350, y: 100, outerRadius: 50, fill: 'magenta', numPoints: 6, innerRadius: 20, draggable: 'true'})
-    let transformer = new Konva.Transformer();
+    // setup default scenario details in the group
 
-    stage.add(layer);
-    group.add(circle, star);
+    let transformer = new Konva.Transformer();
     layer.add(group);  // the yellow rect is added to confirm zIndex changes work as expected.
     layer.add(transformer); // Add the transformer to the layer
+    stage.add(layer);
 
 // Create the group border rect.
-    const borderThang = new GroupBorder(group, settings, transformer);
+    const borderGroupBox = new GroupBorder(group, settings, transformer);
+    setupEvents(scenario, group, borderGroupBox)
 
     /*
     ** Any shape in the group must call the moveBorder fn in its dragmove listener.
     */
-    circle.on('dragmove', function(){
-      borderThang.moveBorder()
-    })
-
-    star.on('dragmove', function(){
-      borderThang.moveBorder()
-    })
+    // circle.on('dragmove', function(){
+    //   borderThang.moveBorder()
+    // })
+    //
+    // star.on('dragmove', function(){
+    //   borderThang.moveBorder()
+    // })
 
 // The group must call the moveBorder fn in any drag listener
-    group.on('dragstart', function(){
-      borderThang.moveBorder()
+    group.on('dragstart', function () {
+      borderGroupBox.moveBorder()
     })
-    group.on('dragmove', function(){
-      borderThang.moveBorder()
+    group.on('dragmove', function () {
+      borderGroupBox.moveBorder()
     })
-    group.on('dragend', function(){
-      borderThang.moveBorder()
+    group.on('dragend', function () {
+      borderGroupBox.moveBorder()
     })
 
 // The group must call startTransform() when a transformer is enabled.
-    group.on('click', function(evt){
+    group.on('click', function (evt) {
       clearTransformer()
-      borderThang.startTransform();
+      borderGroupBox.startTransform();
       transformer.nodes([group]);
       // show Scenario Menu
       setupSelectedScenario(group.id)
@@ -314,18 +440,18 @@ const setupScenarios = () => {
     })
 
 // becuase grouped shapes can be dragged we might need to close the transformer if is is open
-    group.on('mousedown', function(evt){
+    group.on('mousedown', function (evt) {
       clearTransformer();
       evt.cancelBubble = true;
     })
 
 // Update the border rect position via the moveBorder function.
-    group.on('transform', function(){
-      borderThang.moveBorder();
+    group.on('transform', function () {
+      borderGroupBox.moveBorder();
     })
 
 // We click the stage empty space to hide the transformer
-    stage.on('click', function(e){
+    stage.on('click', function (e) {
       console.log('Click stage')
       console.log(e.evt.clientX, e.evt.clientY)
       clearTransformer();
@@ -333,9 +459,9 @@ const setupScenarios = () => {
     })
 
 // Util fundtion to clear the transformer and tell the border rect that transforming has stopped/
-    function clearTransformer(){
+    function clearTransformer() {
       transformer.nodes([]);
-      borderThang.endTransform();
+      borderGroupBox.endTransform();
     }
 
 // Button to show/hide the border rect.
@@ -348,7 +474,6 @@ const setupScenarios = () => {
     // layer.add(group);
   })
 }
-
 
 // control data for the border
 const settings = {
@@ -375,9 +500,9 @@ class GroupBorder {
   transformer = null;
   dragStartPos = {};
   dragStartGroupPos = {};
-  transforming=false;
+  transforming = false;
 
-  constructor(group, settings, transformer){
+  constructor(group, settings, transformer) {
 
     this.group = group;
     this.padding = settings.padding; // get the padding from the settings object.
@@ -387,10 +512,11 @@ class GroupBorder {
     /* set up the border rectangle. A few lines related to setting fill opacity independent of stroke */
     const opacity = (settings.fill === 'transparent') ? 0 : settings.opacity;
     const colorParts = Konva.Util.getRGB(settings.fill); // + (255 * settings.opacity).toString(16);
-    function getHex(val){
-      return (val.toString(16).length < 2)?'0'+ val.toString(16) : val.toString(16);
+    function getHex(val) {
+      return (val.toString(16).length < 2) ? '0' + val.toString(16) : val.toString(16);
     }
-    const fillColor = '#' + getHex(colorParts.r) + getHex(colorParts.g) +  getHex(colorParts.b) + getHex(Math.floor(255 * opacity));
+
+    const fillColor = '#' + getHex(colorParts.r) + getHex(colorParts.g) + getHex(colorParts.b) + getHex(Math.floor(255 * opacity));
 
     // Now that's over, create the rect
     this.borderRect.setAttrs(
@@ -406,24 +532,25 @@ class GroupBorder {
     const that = this;
 
     // The border rect can be dragged giving the ability to drag the group. Note the rect and group positions at drag start
-    this.borderRect.on('dragstart', function(){
+    this.borderRect.on('dragstart', function () {
       const shape = this;
       that.dragStartPos = shape.position()
       that.dragStartGroupPos = group.position()
     })
 
     // On each fire of the dragmove event, compute the distance moved since start and apply to the group.
-    this.borderRect.on('dragmove', function(){
+    this.borderRect.on('dragmove', function () {
+      console.log('drag outer box')
       const shape = this,
           pos = shape.position(),
           daltaPos = {x: pos.x - that.dragStartPos.x, y: pos.y - that.dragStartPos.y};
 
-      group.position({x: that.dragStartGroupPos.x + daltaPos.x, y: that.dragStartGroupPos.y + daltaPos.y });
+      group.position({x: that.dragStartGroupPos.x + daltaPos.x, y: that.dragStartGroupPos.y + daltaPos.y});
     })
 
 
     // If the user clicks on the border rect then we enable the transformer
-    this.borderRect.on('click', function(evt){
+    this.borderRect.on('click', function (evt) {
       that.transformer.nodes([]); // clear transformer nodes
       that.startTransform(); // call before setting transformer nodes!
       that.transformer.nodes([group]); // set transformer nodes
@@ -440,23 +567,23 @@ class GroupBorder {
   }
 
   // Show & hide the border rect.
-  toggleBorder(){
+  toggleBorder() {
     this.showBorder = !this.showBorder;
     this.borderRect.visible(this.showBorder);
   }
 
   // Set the transforming flag and the transformer padding to match the border rect padding
-  startTransform(){
+  startTransform() {
     this.transformer.padding(this.padding);
   }
 
-  endTransform(){
+  endTransform() {
     // nothing to do here !
   }
 
 
   /* Function to do all the manipulation of the border and background rects*/
-  moveBorder(){
+  moveBorder() {
     const r = this.group.getClientRect({skipTransform: true}),
         // we need the bounding rect of the group without scale or rotation.
         // the pt is the top-left of the bounding rect without scaling or rotation, plus anti-scaled padding width. This width is anti-scaled
@@ -484,6 +611,7 @@ class GroupBorder {
     });
   }
 }
+
 // End of GroupBorder class
 
 onMounted(async () => {
@@ -508,6 +636,7 @@ onMounted(async () => {
   bottom: 0;
   padding: 30px;
 }
+
 .scenario-box {
   border: solid 1px black;
 }

@@ -55,7 +55,7 @@ const signin = () => {
 };
 
 const register = async () => {
-  console.log(registerForm.value);
+  // console.log(registerForm.value);
   const credentials = await createUser(
       registerForm.value.email,
       registerForm.value.password

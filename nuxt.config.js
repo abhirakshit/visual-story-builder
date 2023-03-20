@@ -1,7 +1,8 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+    theme: 'genesis',
     meta: {
-        title: 'Conneczen'
+        title: 'Indras Net Story Builder'
     },
     css: [
         // Load a Node.js module directly (here it's a Sass file).
@@ -23,6 +24,9 @@ export default defineNuxtConfig({
     plugins: [
         // { src: "~/plugins/vueKonva.client", mode: 'client' }
     ],
+    modules: [
+        '@formkit/nuxt',
+    ],
     buildModules: [
         '@nuxtjs/style-resources',
         '@nuxtjs/fontawesome',
@@ -37,4 +41,5 @@ export default defineNuxtConfig({
     build: {
         transpile: ['konva']
     },
+
 })

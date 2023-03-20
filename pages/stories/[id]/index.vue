@@ -282,7 +282,37 @@ const addScenarioToStage = async () => {
   redraw();
 }
 
-const scenarioGroupMapping = [];
+// const scenarioGroupMapping = [];
+const getConnectorPoints = (from, to) => {
+  // console.log({from, to})
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  let angle = Math.atan2(-dy, dx);
+
+  const radius = 15;
+
+  return [
+    from.x + -radius * Math.cos(angle + Math.PI),
+    from.y + radius * Math.sin(angle + Math.PI),
+    to.x + -radius * Math.cos(angle),
+    to.y + radius * Math.sin(angle),
+  ];
+}
+
+const redrawArrows = (group, connectors) => {
+  connectors.map((connector) => {
+    let fromNode = group.findOne('#' + connector.startTargetId);
+    let toNode = group.findOne('#' + connector.endTargetId);
+
+    const points = getConnectorPoints(
+        fromNode.position(),
+        toNode.position()
+    );
+    // console.log("points", points)
+    let arrow = group.findOne('#' + connector.id)
+    arrow.points(points);
+  })
+}
 const setupEvents = (scenario, group, borderGroupBox) => {
   let eventLocY = 50, eventLocX = 150
   scenario.events.map((evt) => {
@@ -291,25 +321,23 @@ const setupEvents = (scenario, group, borderGroupBox) => {
     let wedge = new Konva.Wedge({
       x: eventLocX,
       y: eventLocY,
-      radius: 30,
-      angle: 60,
+      radius: 20,
+      angle: 65,
       fill: 'yellow',
       stroke: 'black',
       strokeWidth: 1,
       rotation: -120,
+      draggable: 'true',
+      id: evt.id
     });
-
-    //set id
-    wedge.id = evt.id
-
     //add to group
     group.add(wedge);
-
     /*
     ** Any shape in the group must call the moveBorder fn in its dragmove listener.
     */
     wedge.on('dragmove', function () {
       borderGroupBox.moveBorder()
+      redrawArrows(group, scenario.connectors)
     })
 
     wedge.on('click', function (evt) {
@@ -327,47 +355,57 @@ const setupEvents = (scenario, group, borderGroupBox) => {
     fill: 'blue',
     shadowBlur: 2,
     cornerRadius: 2,
+    draggable: 'true',
+    id: scenario.reaction.id
   });
   group.add(rect)
   rect.on('dragmove', function () {
     borderGroupBox.moveBorder()
+    redrawArrows(group, scenario.connectors)
   })
-  rect.id = scenario.reaction.id
 
   //Create Mental State
   let circle = new Konva.Circle({
     x: eventLocX + 200,
     y: eventLocY - 50,
-    radius: 15,
+    radius: 10,
     fill: 'red',
     stroke: 'black',
     strokeWidth: 4,
+    draggable: 'true',
+    id: scenario.mentalState.id
   });
   group.add(circle)
   circle.on('dragmove', function () {
     borderGroupBox.moveBorder()
+    redrawArrows(group, scenario.connectors)
   })
-  circle.id = scenario.mentalState.id
+  circle.on('click', function (evt) {
+    evt.cancelBubble = true;
+    console.log('Circle Selected')
+  })
 
   // Create Connectors
-  scenario.connectors.map((evt) => {
-    eventLocY += 50;
-    // let wedge = new Konva.Wedge({
-    //   x: eventLocX,
-    //   y: eventLocY,
-    //   radius: 30,
-    //   angle: 60,
-    //   fill: 'yellow',
-    //   stroke: 'black',
-    //   strokeWidth: 1,
-    //   rotation: -120,
-    // });
-
-    //set id
-    // wedge.id = evt.id
+  scenario.connectors.map((connector) => {
+    let arrow = new Konva.Arrow({
+      stroke: 'black',
+      id: connector.id,
+      fill: 'black',
+      draggable: 'false'
+    });
 
     //add to group
-    // group.add(wedge);
+    group.add(arrow);
+
+    // let fromNode = group.findOne('#' + connector.startTargetId);
+    // let toNode = group.findOne('#' + connector.endTargetId);
+    //
+    // const points = getConnectorPoints(
+    //     fromNode.position(),
+    //     toNode.position()
+    // );
+    // console.log("points", points)
+    // arrow.points(points);
 
     /*
     ** Any shape in the group must call the moveBorder fn in its dragmove listener.
@@ -376,6 +414,7 @@ const setupEvents = (scenario, group, borderGroupBox) => {
     //   borderGroupBox.moveBorder()
     // })
   })
+  redrawArrows(group, scenario.connectors)
 }
 
 const setupScenarios = () => {
@@ -398,11 +437,48 @@ const setupScenarios = () => {
     // setup default scenario details in the group
 
     let transformer = new Konva.Transformer();
-    layer.add(group);  // the yellow rect is added to confirm zIndex changes work as expected.
+    // let circle = new Konva.Circle({ x: 300, y: 75, radius: 20, fill: 'red', draggable: 'true'})
+    // let star = new Konva.Star({ x: 350, y: 100, outerRadius: 50, fill: 'magenta', numPoints: 6, innerRadius: 20, draggable: 'true'});
+    // let rect = new Konva.Rect({
+    //   x: 200,
+    //   y: 75,
+    //   width: 40,
+    //   height: 40,
+    //   fill: 'blue',
+    //   shadowBlur: 10,
+    //   cornerRadius: 10,
+    //   draggable: 'true'
+    // })
+    //
+    // let wedge = new Konva.Wedge({
+    //   x: 150,
+    //   y: 50,
+    //   radius: 30,
+    //   angle: 60,
+    //   fill: 'yellow',
+    //   stroke: 'black',
+    //   strokeWidth: 1,
+    //   rotation: -120,
+    //   draggable: 'true'
+    // });
+    //
+    // let wedge1 = new Konva.Wedge({
+    //   x: 150,
+    //   y: 100,
+    //   radius: 30,
+    //   angle: 60,
+    //   fill: 'yellow',
+    //   stroke: 'black',
+    //   strokeWidth: 1,
+    //   rotation: -120,
+    // });
+    // group.add(circle, star)
+    // group.add(circle, rect, wedge, wedge1)
+    layer.add(group);
     layer.add(transformer); // Add the transformer to the layer
     stage.add(layer);
 
-// Create the group border rect.
+    // Create the group border rect.
     const borderGroupBox = new GroupBorder(group, settings, transformer);
     setupEvents(scenario, group, borderGroupBox)
 
@@ -410,11 +486,11 @@ const setupScenarios = () => {
     ** Any shape in the group must call the moveBorder fn in its dragmove listener.
     */
     // circle.on('dragmove', function(){
-    //   borderThang.moveBorder()
+    //   borderGroupBox.moveBorder()
     // })
     //
     // star.on('dragmove', function(){
-    //   borderThang.moveBorder()
+    //   borderGroupBox.moveBorder()
     // })
 
 // The group must call the moveBorder fn in any drag listener
@@ -434,8 +510,6 @@ const setupScenarios = () => {
       borderGroupBox.startTransform();
       transformer.nodes([group]);
       // show Scenario Menu
-      setupSelectedScenario(group.id)
-      // console.log(currentMenuComponent)
       evt.cancelBubble = true;
     })
 
@@ -551,10 +625,13 @@ class GroupBorder {
 
     // If the user clicks on the border rect then we enable the transformer
     this.borderRect.on('click', function (evt) {
+      console.log('Outer box selected')
       that.transformer.nodes([]); // clear transformer nodes
       that.startTransform(); // call before setting transformer nodes!
       that.transformer.nodes([group]); // set transformer nodes
       evt.cancelBubble = true;   // stop the event passing up the parents
+
+      setupSelectedScenario(group.id)
     })
 
     // Add the border rect to the same parent as the group

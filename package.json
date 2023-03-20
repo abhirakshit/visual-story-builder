@@ -17,6 +17,8 @@
     "nuxt": "^3.2.2"
   },
   "dependencies": {
+    "@formkit/nuxt": "^0.16.2",
+    "@formkit/themes": "^0.16.2",
     "@fortawesome/fontawesome-svg-core": "^6.3.0",
     "@fortawesome/vue-fontawesome": "^3.0.3",
     "bulma": "^0.9.4",

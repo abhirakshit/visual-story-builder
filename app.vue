@@ -6,6 +6,7 @@
 
 <script>
 console.log('APP--')
+import '@formkit/themes/genesis'
 </script>
 
 <style>

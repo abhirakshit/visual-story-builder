@@ -11,7 +11,8 @@ export default defineNuxtConfig({
         '@/assets/css/app.css',
         // SCSS file in the project
         '@/assets/css/admin.css',
-        '@fortawesome/fontawesome-svg-core/styles.css'
+        '@fortawesome/fontawesome-svg-core/styles.css',
+        '@/node_modules/bulma-list/css/bulma-list.css'
     ],
     loading: {
         color: 'blue',

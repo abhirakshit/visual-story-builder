@@ -75,7 +75,7 @@ const scenarios = ref()
 const events = ref()
 const mentalStates = ref()
 let sceneWidth = 1000;
-let sceneHeight = 1000;
+let sceneHeight = 500;
 let stage, layer;
 
 const menuProps = ref();
@@ -136,6 +136,7 @@ const setupSelectedEvent = (sc, groupId, event) => {
     'scenario': sc,
     'event': event,
     'path': `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios/${groupId}`
+
   }
 
   //change dynamic templates
@@ -146,7 +147,8 @@ const setupMentalStateEvent = (sc, groupId) => {
   console.log("Mental State Selected", groupId)
   menuProps.value = {
     'scenario': sc,
-    'path': `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios/${groupId}`
+    'path': `users/${firebaseUser.value.uid}/mentalStateModels`,
+    'scenarioPath': `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios/${groupId}`
   }
 
   //change dynamic templates
@@ -186,7 +188,6 @@ const setupAddMenu = () => {
   });
 
   stage.on('contextmenu', function (e) {
-
     // prevent default behavior
     e.evt.preventDefault();
     if (e.target != stage) {
@@ -196,23 +197,26 @@ const setupAddMenu = () => {
     currentShape = e.target;
     // show menu
     menuNode.style.display = 'initial';
-    var containerRect = stage.container().getBoundingClientRect();
-    // console.log('evt', e.evt.clientY, e.evt.clientX)
+    // var containerRect = stage.container().getBoundingClientRect();
+    // console.log('evt', e.evt.layerX, e.evt.layerY)
     // console.log('stage', containerRect.top, containerRect.left)
-    // console.log('mouse', stage.getPointerPosition().y, stage.getPointerPosition().x)
+    // console.log('mouse', stage.getPointerPosition().x, stage.getPointerPosition().y)
     // console.log(containerRect.top, containerRect.left, stage.getPointerPosition().y, stage.getPointerPosition().x)
     // console.log(containerRect.top + stage.getPointerPosition().y + 4 + 'px', containerRect.left + stage.getPointerPosition().x + 4 + 'px')
     menuNode.style.top = stage.getPointerPosition().y + 140 + 'px';
+    // menuNode.style.top = e.evt.layerX + 'px';
     menuNode.style.left = stage.getPointerPosition().x + 20 + 'px';
+    // menuNode.style.left = e.evt.layerY + 'px';
   });
 }
 
 const setupCanvas = () => {
   // first we need to create a stage
-  // const canvas = document.getElementById('canvas');
+  const canvas = document.getElementById('canvas');
   stage = new Konva.Stage({
     container: 'canvas',   // id of container <div>
-    width: sceneWidth,
+    // width: sceneWidth,
+    width: canvas.offsetWidth,
     height: sceneHeight
   });
   setupAddMenu()
@@ -234,6 +238,11 @@ const setupData = async () => {
     })
     setupScenarios()
   })
+}
+
+const getCanvasCenterX = () => {
+  const canvas = document.getElementById('canvas');
+  return canvas.offsetWidth/2
 }
 
 const getScale = () => {
@@ -328,6 +337,7 @@ const redrawArrows = (group, connectors) => {
   })
 }
 const setupEvents = (scenario, group, borderGroupBox) => {
+  console.log('group coord', group.x(), group.y(), stage.x(), stage.y())
   let eventLocY = 50, eventLocX = 150
   scenario.events.map((event) => {
     // get evt settings
@@ -439,57 +449,23 @@ const setupScenarios = () => {
     console.log('Scenarios Empty')
     return
   }
-  console.log('Scenarios', scenarios.value)
+  // console.log('Scenarios', scenarios.value)
+  let scCount = 0
   scenarios.value.map((scenario) => {
     // console.log('sc', scenario.id)
     // create scenario groups
+    console.log("x,y", getCanvasCenterX() - 60, 40 + (40*scCount))
     let group = new Konva.Group({
-      x: 120,
-      y: 40,
+      x: getCanvasCenterX() - 60,
+      y: 40 + (40*scCount), // new scenarios should sit below prior ones
       rotation: 0,
       draggable: true
     });
     group.id = scenario.id
-    // setup default scenario details in the group
+    scCount++;
 
+    // setup default scenario details in the group
     let transformer = new Konva.Transformer();
-    // let circle = new Konva.Circle({ x: 300, y: 75, radius: 20, fill: 'red', draggable: 'true'})
-    // let star = new Konva.Star({ x: 350, y: 100, outerRadius: 50, fill: 'magenta', numPoints: 6, innerRadius: 20, draggable: 'true'});
-    // let rect = new Konva.Rect({
-    //   x: 200,
-    //   y: 75,
-    //   width: 40,
-    //   height: 40,
-    //   fill: 'blue',
-    //   shadowBlur: 10,
-    //   cornerRadius: 10,
-    //   draggable: 'true'
-    // })
-    //
-    // let wedge = new Konva.Wedge({
-    //   x: 150,
-    //   y: 50,
-    //   radius: 30,
-    //   angle: 60,
-    //   fill: 'yellow',
-    //   stroke: 'black',
-    //   strokeWidth: 1,
-    //   rotation: -120,
-    //   draggable: 'true'
-    // });
-    //
-    // let wedge1 = new Konva.Wedge({
-    //   x: 150,
-    //   y: 100,
-    //   radius: 30,
-    //   angle: 60,
-    //   fill: 'yellow',
-    //   stroke: 'black',
-    //   strokeWidth: 1,
-    //   rotation: -120,
-    // });
-    // group.add(circle, star)
-    // group.add(circle, rect, wedge, wedge1)
     layer.add(group);
     layer.add(transformer); // Add the transformer to the layer
     stage.add(layer);
@@ -497,17 +473,6 @@ const setupScenarios = () => {
     // Create the group border rect.
     const borderGroupBox = new GroupBorder(group, settings, transformer);
     setupEvents(scenario, group, borderGroupBox)
-
-    /*
-    ** Any shape in the group must call the moveBorder fn in its dragmove listener.
-    */
-    // circle.on('dragmove', function(){
-    //   borderGroupBox.moveBorder()
-    // })
-    //
-    // star.on('dragmove', function(){
-    //   borderGroupBox.moveBorder()
-    // })
 
 // The group must call the moveBorder fn in any drag listener
     group.on('dragstart', function () {
@@ -529,7 +494,7 @@ const setupScenarios = () => {
       evt.cancelBubble = true;
     })
 
-// becuase grouped shapes can be dragged we might need to close the transformer if is is open
+// because grouped shapes can be dragged we might need to close the transformer if is is open
     group.on('mousedown', function (evt) {
       clearTransformer();
       evt.cancelBubble = true;
@@ -544,6 +509,7 @@ const setupScenarios = () => {
     stage.on('click', function (e) {
       console.log('Click stage')
       console.log(e.evt.clientX, e.evt.clientY)
+      console.log(e.evt.layerX, e.evt.layerY)
       clearTransformer();
       resetMenuComponent();
     })
@@ -554,15 +520,9 @@ const setupScenarios = () => {
       borderGroupBox.endTransform();
     }
 
-// Button to show/hide the border rect.
-//     $('#toggleBorder').on('click', function(){
-//       borderThang.toggleBorder();
-//       console.log('togle')
-//     })
-
-    // add to layer
-    // layer.add(group);
+    borderGroupBox.moveBorder();
   })
+
 }
 
 // control data for the border
@@ -640,12 +600,12 @@ class GroupBorder {
 
 
     // If the user clicks on the border rect then we enable the transformer
-    this.borderRect.on('click', function (evt) {
-      console.log('Outer box selected')
+    this.borderRect.on('click', function (e) {
+      console.log('Outer box selected', e)
       that.transformer.nodes([]); // clear transformer nodes
       that.startTransform(); // call before setting transformer nodes!
       that.transformer.nodes([group]); // set transformer nodes
-      evt.cancelBubble = true;   // stop the event passing up the parents
+      e.cancelBubble = true;   // stop the event passing up the parents
 
       setupSelectedScenario(group.id)
     })

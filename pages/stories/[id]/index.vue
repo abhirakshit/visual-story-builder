@@ -31,7 +31,7 @@
         <!--          <button id='toggleBorder'>Toggle border rect</button>-->
         <!--        </div>-->
         <div class="columns">
-          <div class="column is-three-quarters">
+          <div class="column is-half">
             <div class="box">
               <div class="columns">
                 <div class="column is-three-quarters">
@@ -48,7 +48,7 @@
               </div>
             </div>
           </div>
-          <div class="column is-one-quarter">
+          <div class="column is-half">
             <div class="box sticky-box">
               <component :is="getMenuComponent()" v-bind="menuProps" @redraw="redraw"/>
             </div>
@@ -83,6 +83,8 @@ const currentMenuComponent = ref();
 currentMenuComponent.value = 'empty'
 
 const ScenarioMenu = resolveComponent('ScenarioMenu')
+const EventMenu = resolveComponent('EventMenu')
+const MentalStateMenu = resolveComponent('MentalStateMenu')
 const EmptyMenu = resolveComponent('EmptyMenu')
 
 const getMenuComponent = () => {
@@ -90,6 +92,10 @@ const getMenuComponent = () => {
   switch (currentMenuComponent.value) {
     case "scenario-menu":
       return ScenarioMenu
+    case "event-menu":
+      return EventMenu
+    case "mental-state-menu":
+      return MentalStateMenu
     case "empty":
       return EmptyMenu
     default:
@@ -103,17 +109,6 @@ const redraw = () => {
   setupScenarios()
   resetMenuComponent()
 }
-// const getMenuProps = () => {
-//   // https://jwkicklighter.com/posts/pass-props-to-dynamic-vue-components/
-//   switch (currentMenuComponent.value) {
-//     case "scenario-menu":
-//       return {}
-//     case "empty":
-//       return {}
-//     default:
-//       return {}
-//   }
-// }
 
 const resetMenuComponent = () => {
   currentMenuComponent.value = 'empty'
@@ -133,6 +128,29 @@ const setupSelectedScenario = (groupId) => {
 
   //change dynamic templates
   currentMenuComponent.value = "scenario-menu"
+}
+
+const setupSelectedEvent = (sc, groupId, event) => {
+  console.log("Event Selected", groupId, event)
+  menuProps.value = {
+    'scenario': sc,
+    'event': event,
+    'path': `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios/${groupId}`
+  }
+
+  //change dynamic templates
+  currentMenuComponent.value = "event-menu"
+}
+
+const setupMentalStateEvent = (sc, groupId) => {
+  console.log("Mental State Selected", groupId)
+  menuProps.value = {
+    'scenario': sc,
+    'path': `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios/${groupId}`
+  }
+
+  //change dynamic templates
+  currentMenuComponent.value = "mental-state-menu"
 }
 
 const getOffsetPointerPos = (clientX, clientY) => {
@@ -211,12 +229,9 @@ const setupData = async () => {
   story.value = docSnap.data()
   const q = query(collection($fireDB, `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios`))
   const unsubscribe = await onSnapshot(q, (querySnapshot) => {
-    // console.log(querySnapshot.docs)
     scenarios.value = querySnapshot.docs.map((documentSnapshot) => {
-      // console.log(documentSnapshot.data())
       return {...documentSnapshot.data(), id: documentSnapshot.id}
     })
-    // console.log('all scen', scenarios.value)
     setupScenarios()
   })
 }
@@ -281,7 +296,6 @@ const addScenarioToStage = async () => {
       })
   redraw();
 }
-
 // const scenarioGroupMapping = [];
 const getConnectorPoints = (from, to) => {
   // console.log({from, to})
@@ -315,7 +329,7 @@ const redrawArrows = (group, connectors) => {
 }
 const setupEvents = (scenario, group, borderGroupBox) => {
   let eventLocY = 50, eventLocX = 150
-  scenario.events.map((evt) => {
+  scenario.events.map((event) => {
     // get evt settings
     eventLocY += 50;
     let wedge = new Konva.Wedge({
@@ -328,7 +342,7 @@ const setupEvents = (scenario, group, borderGroupBox) => {
       strokeWidth: 1,
       rotation: -120,
       draggable: 'true',
-      id: evt.id
+      id: event.id
     });
     //add to group
     group.add(wedge);
@@ -343,6 +357,7 @@ const setupEvents = (scenario, group, borderGroupBox) => {
     wedge.on('click', function (evt) {
       evt.cancelBubble = true;
       console.log('Event Selected')
+      setupSelectedEvent(scenario, group.id, event)
     })
   })
 
@@ -383,6 +398,7 @@ const setupEvents = (scenario, group, borderGroupBox) => {
   circle.on('click', function (evt) {
     evt.cancelBubble = true;
     console.log('Circle Selected')
+    setupMentalStateEvent(scenario, group.id)
   })
 
   // Create Connectors
@@ -614,7 +630,7 @@ class GroupBorder {
 
     // On each fire of the dragmove event, compute the distance moved since start and apply to the group.
     this.borderRect.on('dragmove', function () {
-      console.log('drag outer box')
+      // console.log('drag outer box')
       const shape = this,
           pos = shape.position(),
           daltaPos = {x: pos.x - that.dragStartPos.x, y: pos.y - that.dragStartPos.y};

@@ -2,18 +2,17 @@
   <div>
     <div v-if="showEditForm">
       <div class="subtitle">
-        Update
+        Update Scenario
         <a class="icon has-text-danger is-pulled-right" @click="showEditForm=false">
           <i class="fas fa-times"></i>
         </a>
       </div>
-      <FormKit type="form" v-model="data" @submit="handleSubmit">
+      <FormKit type="form" v-model="data" @submit="handleSubmit" submit-label="Save">
         <FormKitSchema :schema="schema" />
       </FormKit>
-
-      <pre>
-        {{ data }}
-      </pre>
+<!--      <pre>-->
+<!--        {{ data }}-->
+<!--      </pre>-->
     </div>
     <div v-else>
       <div class="columns">
@@ -43,7 +42,7 @@
 </template>
 
 <script setup>
-import { doc, deleteDoc } from "firebase/firestore"
+import { doc, deleteDoc, updateDoc } from "firebase/firestore"
 const {$fireDB} = useNuxtApp()
 const emit = defineEmits(['redraw']);
 const props = defineProps(['scenario', 'path'])
@@ -67,14 +66,10 @@ const data = ref({
   title: 'title',
   description: 'description'
 });
-// const d1 = ref()
-// const data = () => {
-//   d1.value = props.scenario
-//   return d1;
-// }
 
-const handleSubmit = () => {
-  console.log(data.value)
+const handleSubmit = async () => {
+  await updateDoc(doc($fireDB, props.path), data.value)
+  // showEditForm.value = false
 };
 
 const deleteScenario = async () => {
@@ -83,7 +78,10 @@ const deleteScenario = async () => {
   emit('redraw')
 }
 onMounted(async () => {
-  console.log('mounted sc', props.scenario)
-  // data.value = props.scenario
+  // console.log('mounted sc', props.scenario)
+  data.value = {
+    title: props.scenario.title,
+    description: props.scenario.description,
+  }
 })
 </script>

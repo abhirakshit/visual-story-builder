@@ -220,7 +220,7 @@ const data = ref({});
 const selectedModelId = ref({});
 
 const handleSubmit = async () => {
-  bulmaToast.toast({ message: 'Hello There' })
+  bulmaToast.toast({ message: 'Updating...' })
   await updateDoc(doc($fireDB, `${props.path}/${props.scenario.mentalStateModelId}`), mentalModel.value)
   // console.log(props.event)
   // const eventsArr = props.scenario.events

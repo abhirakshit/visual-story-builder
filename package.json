@@ -30,6 +30,7 @@
     "firebase-admin": "^11.5.0",
     "firebase-functions": "^4.2.1",
     "konva": "^8.4.2",
-    "vue-konva": "^3.0.2"
+    "vue-konva": "^3.0.2",
+    "vue3-rich-accordion": "^0.0.7"
   }
 }

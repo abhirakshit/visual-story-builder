@@ -80,4 +80,14 @@ const signOut = () => {
 @import "https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css";
 @import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css";
 @import "https://cdn.jsdelivr.net/npm/animate.css@4.0.0/animate.min.css";
+
+/*.v-enter-active,*/
+/*.v-leave-active {*/
+/*  transition: opacity 0.5s ease;*/
+/*}*/
+
+/*.v-enter-from,*/
+/*.v-leave-to {*/
+/*  opacity: 0;*/
+/*}*/
 </style>

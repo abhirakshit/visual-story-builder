@@ -6015,6 +6015,11 @@ vue-router@^4.1.6:
   dependencies:
     "@vue/devtools-api" "^6.4.5"
 
+vue3-rich-accordion@^0.0.7:
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/vue3-rich-accordion/-/vue3-rich-accordion-0.0.7.tgz#db9bdc11e878fb7af18ac396cf9567f7e17b7e91"
+  integrity sha512-DWq5PHx3vbohgOVLAqxi2JxX3zSPB6ka73ypesy6XxH5btZQs4fnCN5sNOidj6SoBT6fDS5OivevY5ZA+oYWhA==
+
 vue@^3.2.47:
   version "3.2.47"
   resolved "https://registry.yarnpkg.com/vue/-/vue-3.2.47.tgz#3eb736cbc606fc87038dbba6a154707c8a34cff0"

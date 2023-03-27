@@ -74,6 +74,9 @@ const story = ref()
 const scenarios = ref()
 const events = ref()
 const mentalStates = ref()
+const allConnectors = ref([
+  {scenarioId: '', connectors: []}
+])
 let sceneWidth = 1000;
 let sceneHeight = 500;
 let stage, layer;
@@ -114,7 +117,7 @@ const resetMenuComponent = () => {
   currentMenuComponent.value = 'empty'
 }
 
-const setupSelectedScenario = (groupId) => {
+const setupSelectedScenario = (groupId, event) => {
   console.log("Group Selected", groupId)
   // Setup scenario as prop
   let sc = scenarios.value.find((sc) => {
@@ -123,7 +126,9 @@ const setupSelectedScenario = (groupId) => {
   console.log('sc', sc)
   menuProps.value = {
     'scenario': sc,
-    'path': `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios/${groupId}`
+    'event': event,
+    'path': `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios/${groupId}`,
+    'mentalModelsPath': `users/${firebaseUser.value.uid}/mentalStateModels`,
   }
 
   //change dynamic templates
@@ -166,27 +171,12 @@ const setupAddMenu = () => {
   // console.log('context')
   let currentShape;
   let menuNode = document.getElementById('menu');
-  // console.log(menuNode)
-  // document.getElementById('pulse-button').addEventListener('click', () => {
-  //   currentShape.to({
-  //     scaleX: 2,
-  //     scaleY: 2,
-  //     onFinish: () => {
-  //       currentShape.to({ scaleX: 1, scaleY: 1 });
-  //     },
-  //   });
-  // });
-  // document.getElementById('delete-button').addEventListener('click', () => {
-  //   currentShape.destroy();
-  // });
-
   window.addEventListener('click', () => {
     // console.log('Click window')
     // hide menu
     menuNode.style.display = 'none';
     // resetMenuComponent()
   });
-
   stage.on('contextmenu', function (e) {
     // prevent default behavior
     e.evt.preventDefault();
@@ -219,7 +209,7 @@ const setupCanvas = () => {
     width: canvas.offsetWidth,
     height: sceneHeight
   });
-  setupAddMenu()
+  // setupAddMenu()
 
 // then create layer
   layer = new Konva.Layer();
@@ -327,6 +317,7 @@ const redrawArrows = (group, connectors) => {
     let fromNode = group.findOne('#' + connector.startTargetId);
     let toNode = group.findOne('#' + connector.endTargetId);
 
+    // console.log("From to", fromNode, toNode)
     const points = getConnectorPoints(
         fromNode.position(),
         toNode.position()
@@ -336,9 +327,11 @@ const redrawArrows = (group, connectors) => {
     arrow.points(points);
   })
 }
+
 const setupEvents = (scenario, group, borderGroupBox) => {
-  console.log('group coord', group.x(), group.y(), stage.x(), stage.y())
-  let eventLocY = 50, eventLocX = 150
+  // let eventLocY = 50, eventLocX = 150
+  let eventLocY = 0, eventLocX = 0
+  let cnt = 0, connectorArr = []
   scenario.events.map((event) => {
     // get evt settings
     eventLocY += 50;
@@ -361,22 +354,42 @@ const setupEvents = (scenario, group, borderGroupBox) => {
     */
     wedge.on('dragmove', function () {
       borderGroupBox.moveBorder()
-      redrawArrows(group, scenario.connectors)
+      // redrawArrows(group, scenario.connectors)
+      redrawArrows(group, connectorArr)
     })
-
     wedge.on('click', function (evt) {
       evt.cancelBubble = true;
       console.log('Event Selected')
-      setupSelectedEvent(scenario, group.id, event)
+      setupSelectedScenario(group.id, event)
+      // setupSelectedEvent(scenario, group.id, event)
     })
+
+    // add connectors
+    let connector = {
+      startTargetId: event.id,
+      endTargetId: scenario.reaction.id,
+      type: event.type == 'General' ? 'Excitation' : 'Catalysing',
+      id: 'cId' + cnt
+    }
+    connectorArr.push(connector)
+    cnt++
   })
+  // Add connector for reaction to state
+  connectorArr.push({
+    startTargetId: scenario.reaction.id,
+    endTargetId: scenario.mentalStateModelId,
+    type: 'Generation',
+    id: 'cId' + cnt
+  })
+  // allConnectors.value.push({scenarioId: scenario.id, connectorArr})
+
 
   //Create Reaction Box
   let rect = new Konva.Rect({
     x: eventLocX + 100,
     y: eventLocY - 50,
-    width: 20,
-    height: 20,
+    width: 15,
+    height: 15,
     fill: 'blue',
     shadowBlur: 2,
     cornerRadius: 2,
@@ -386,7 +399,8 @@ const setupEvents = (scenario, group, borderGroupBox) => {
   group.add(rect)
   rect.on('dragmove', function () {
     borderGroupBox.moveBorder()
-    redrawArrows(group, scenario.connectors)
+    // redrawArrows(group, scenario.connectors)
+    redrawArrows(group, connectorArr)
   })
 
   //Create Mental State
@@ -398,12 +412,14 @@ const setupEvents = (scenario, group, borderGroupBox) => {
     stroke: 'black',
     strokeWidth: 4,
     draggable: 'true',
-    id: scenario.mentalState.id
+    // id: scenario.mentalState.id
+    id: scenario.mentalStateModelId
   });
   group.add(circle)
   circle.on('dragmove', function () {
     borderGroupBox.moveBorder()
-    redrawArrows(group, scenario.connectors)
+    // redrawArrows(group, scenario.connectors)
+    redrawArrows(group, connectorArr)
   })
   circle.on('click', function (evt) {
     evt.cancelBubble = true;
@@ -412,35 +428,31 @@ const setupEvents = (scenario, group, borderGroupBox) => {
   })
 
   // Create Connectors
-  scenario.connectors.map((connector) => {
+  // calculateConnectors(scenario);
+  // scenario.connectors.map((connector) => {
+  //   let arrow = new Konva.Arrow({
+  //     stroke: 'black',
+  //     id: connector.id,
+  //     fill: 'black',
+  //     draggable: 'false'
+  //   });
+  //   //add to group
+  //   group.add(arrow);
+  // })
+  // redrawArrows(group, scenario.connectors)
+
+  // Draw All Connectors
+  connectorArr.map((connector) => {
     let arrow = new Konva.Arrow({
       stroke: 'black',
       id: connector.id,
       fill: 'black',
       draggable: 'false'
     });
-
     //add to group
     group.add(arrow);
-
-    // let fromNode = group.findOne('#' + connector.startTargetId);
-    // let toNode = group.findOne('#' + connector.endTargetId);
-    //
-    // const points = getConnectorPoints(
-    //     fromNode.position(),
-    //     toNode.position()
-    // );
-    // console.log("points", points)
-    // arrow.points(points);
-
-    /*
-    ** Any shape in the group must call the moveBorder fn in its dragmove listener.
-    */
-    // wedge.on('dragmove', function () {
-    //   borderGroupBox.moveBorder()
-    // })
   })
-  redrawArrows(group, scenario.connectors)
+  redrawArrows(group, connectorArr)
 }
 
 const setupScenarios = () => {
@@ -452,9 +464,8 @@ const setupScenarios = () => {
   // console.log('Scenarios', scenarios.value)
   let scCount = 0
   scenarios.value.map((scenario) => {
-    // console.log('sc', scenario.id)
     // create scenario groups
-    console.log("x,y", getCanvasCenterX() - 60, 40 + (40*scCount))
+    // console.log("x,y", getCanvasCenterX() - 60, 40 + (40*scCount))
     let group = new Konva.Group({
       x: getCanvasCenterX() - 60,
       y: 40 + (40*scCount), // new scenarios should sit below prior ones
@@ -505,11 +516,15 @@ const setupScenarios = () => {
       borderGroupBox.moveBorder();
     })
 
+    // group.on('contextmenu', (e) => {
+    //   console.log('show context menu')
+    // })
+
 // We click the stage empty space to hide the transformer
     stage.on('click', function (e) {
-      console.log('Click stage')
-      console.log(e.evt.clientX, e.evt.clientY)
-      console.log(e.evt.layerX, e.evt.layerY)
+      // console.log('Click stage')
+      // console.log('ClientXY', e.evt.clientX, e.evt.clientY)
+      // console.log('LayerXY', e.evt.layerX, e.evt.layerY)
       clearTransformer();
       resetMenuComponent();
     })
@@ -522,7 +537,6 @@ const setupScenarios = () => {
 
     borderGroupBox.moveBorder();
   })
-
 }
 
 // control data for the border
@@ -610,6 +624,19 @@ class GroupBorder {
       setupSelectedScenario(group.id)
     })
 
+    let currentShape;
+    let menuNode = document.getElementById('menu');
+    // this.borderRect.on('contextmenu', function (e) {
+    //   console.log('ttt')
+    //   // e.cancelBubble = true
+    //   currentShape = e.target;
+    //   // show menu
+    //   menuNode.style.display = 'initial';
+    //   console.log('evt', e.evt.layerX, e.evt.layerY)
+    //   menuNode.style.top = e.evt.layerY + 140 + 'px';
+    //   menuNode.style.left = e.evt.layerX + 20 + 'px';
+    // })
+
     // Add the border rect to the same parent as the group
     this.group.getParent().add(this.borderRect);
 
@@ -664,7 +691,6 @@ class GroupBorder {
     });
   }
 }
-
 // End of GroupBorder class
 
 onMounted(async () => {
@@ -672,8 +698,6 @@ onMounted(async () => {
   setupCanvas()
   await setupData()
   // fitStageIntoParentContainer()
-  // Setup Scenarios as separate groups
-  // setupScenarios()
 })
 </script>
 

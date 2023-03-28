@@ -551,6 +551,7 @@ const replaceModel = async () => {
 }
 
 onMounted(async () => {
+  console.log('ms mounted')
   selectedModelId.value = props.scenario.mentalStateModelId
   const docSnap = await getDoc(doc($fireDB, `${props.path}/${props.scenario.mentalStateModelId}`))
   mentalModel.value = docSnap.data()

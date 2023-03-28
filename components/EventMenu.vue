@@ -29,8 +29,9 @@
             <div class="control">
               <div class="select">
                 <select v-model="event.type">
-                  <option>General</option>
+                  <option>Excitation</option>
                   <option>Catalysing</option>
+                  <option>Inhibition</option>
                 </select>
               </div>
             </div>

@@ -40,7 +40,9 @@
           <div class="card-header">
             <div class="card-header-title">
               Events
-              <a class="ml-2 button is-pulled-right is-small is-primary" @click="showAddEvent=true">
+            </div>
+            <div class="card-header-icon">
+              <a class="ml-2 button is-small is-primary" @click="showAddEvent=true">
                 <i class="fas fa-plus"></i> Add New
               </a>
             </div>
@@ -52,7 +54,7 @@
                 <div class="list-item" v-for="evt in events">
                   <div class="list-item-content">
                     <div class="list-item-title" :class="isSelectedEvent(evt.id)">
-                      <span class="tag mr-1" :class="evt.type=='Catalysing'?'is-link' : 'is-warning'">
+                      <span class="tag mr-1" :class="getEventTagColor(evt.type)">
                         {{ evt.type }}
                       </span>
                       {{ evt.description }}
@@ -84,8 +86,9 @@
                       <div class="control">
                         <div class="select">
                           <select v-model="eventData.type">
-                            <option>General</option>
+                            <option>Excitation</option>
                             <option>Catalysing</option>
+                            <option>Inhibition</option>
                           </select>
                         </div>
                       </div>
@@ -136,11 +139,43 @@
 
         </div>
 
-        <div class="card">
+        <div class="card" v-if="showReplaceForm">
+          <div class="card-header">
+            <div class="card-header-title subtitle">Update Mental Model</div>
+            <div class="card-header-icon">
+              <a class="has-text-danger" @click="showReplaceForm=false">
+                <i class="fas fa-times"></i>
+              </a>
+            </div>
+          </div>
+          <div class="card-content">
+            <div class="select is-rounded is-success">
+              <select v-model="selectedModelId">
+                <option v-for="mModel in mentalModels" :key="mModel.id"
+                        :value="mModel.id">{{ mModel.title }}
+                </option>
+              </select>
+            </div>
+            <div class="field is-grouped mt-2">
+              <div class="control">
+                <button class="button is-link" @click="replaceModel">Submit</button>
+              </div>
+              <div class="control">
+                <button class="button is-link is-light" @click="showReplaceForm=false">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card" v-else>
           <div class="card-header">
             <div class="card-header-title">
-              Mental Model: {{mentalModel.title}}
+              Mental Model: <a @click="$emit('showMentalModel', scenario)">{{mentalModel.title}}</a>
             </div>
+            <button class="card-header-icon">
+              <a class="icon has-text-danger" @click="showReplaceForm=!showReplaceForm">
+                <i class="fas fa-retweet"></i>
+              </a>
+            </button>
           </div>
           <div class="card-content">
             <div class="content">
@@ -155,16 +190,19 @@
 </template>
 
 <script setup>
-import {doc, deleteDoc, updateDoc, getDoc, addDoc, collection, query, onSnapshot} from "firebase/firestore"
+import {doc, deleteDoc, updateDoc, getDoc, addDoc, collection, query, onSnapshot, getDocs} from "firebase/firestore"
 import * as bulmaToast from "bulma-toast";
 
 const {$fireDB} = useNuxtApp()
-const emit = defineEmits(['redraw']);
-const props = defineProps(['scenario', 'path', 'mentalModelsPath', 'event'])
+const emit = defineEmits(['redraw', 'showMentalModel']);
+const props = defineProps(['scenario', 'path', 'mentalModelsPath', 'event', 'scenarioCollPath'])
 const showEditForm = ref(false)
 const showAddEvent = ref(false)
+const showReplaceForm = ref(false)
 const eventData = ref({type: '', description: ''})
 const mentalModel = ref({title: '', description: ''})
+const selectedModelId = ref({});
+const mentalModels = ref()
 const schema = [
   {
     $formkit: "text",
@@ -185,6 +223,17 @@ const data = ref({
   title: 'title',
   description: 'description'
 });
+
+const getEventTagColor = (type) => {
+  switch (type) {
+    case 'Excitation':
+      return 'is-success';
+    case 'Catalysing':
+      return 'is-primary';
+    case 'Inhibition':
+      return 'is-danger';
+  }
+}
 
 const addEvent = async () => {
   bulmaToast.toast({
@@ -255,23 +304,79 @@ const handleSubmit = async () => {
 
 const deleteScenario = async () => {
   console.log('deleting', props.path)
-  await deleteDoc(doc($fireDB, props.path));
-  emit('redraw')
+  //TODO remove all events first
+  bulmaToast.toast({
+    message: 'Please Wait...',
+    type: 'is-warning',
+    animate: {in: 'slideInRight', out: 'slideOutRight'}
+  })
+  events.value.map(async (evt) => {
+    await deleteDoc(doc($fireDB, `${props.path}/events/${evt.id}`))
+  })
+  await deleteDoc(doc($fireDB, props.path)).then(() => {
+    bulmaToast.toast({
+      message: 'Successfully Removed Scenario and Events',
+      type: 'is-primary',
+      animate: {in: 'slideInRight', out: 'slideOutRight'}
+    })
+    emit('redraw')
+  });
 }
-onMounted(async () => {
-  data.value = {
-    title: props.scenario.title,
-    description: props.scenario.description,
+
+const replaceModel = async () => {
+  bulmaToast.toast({
+    message: 'Updating Model',
+    type: 'is-info',
+    animate: {in: 'slideInRight', out: 'slideOutRight'}
+  })
+  if (props.scenario.mentalStateModelId == selectedModelId.value) {
+    // do nothing and show toast
+    bulmaToast.toast({
+      message: 'This model is currently associated to the scenario', type: 'is-warning',
+      animate: {in: 'slideInRight', out: 'slideOutRight'}
+    })
+  } else {
+    await updateDoc(doc($fireDB, props.path), {
+      mentalStateModelId: selectedModelId.value
+    }).then(() => {
+      // Show toast
+      bulmaToast.toast({
+        message: 'Successfully updated model.', type: 'is-success',
+        animate: {in: 'slideInRight', out: 'slideOutRight'}
+      })
+      emit('redraw')
+    });
   }
+}
 
-  const docSnap = await getDoc(doc($fireDB, `${props.mentalModelsPath}/${props.scenario.mentalStateModelId}`))
-  mentalModel.value = docSnap.data()
+onMounted(async () => {
+  if (props.scenario) {
+    data.value = {
+      title: props.scenario.title,
+      description: props.scenario.description,
+    }
 
-  const q = query(collection($fireDB, `${props.path}/events`))
-  await onSnapshot(q, (querySnapshot) => {
-    events.value = querySnapshot.docs.map((documentSnapshot) => {
+    const docSnap = await getDoc(doc($fireDB, `${props.mentalModelsPath}/${props.scenario.mentalStateModelId}`))
+    mentalModel.value = docSnap.data()
+
+    const q = query(collection($fireDB, `${props.path}/events`))
+    await onSnapshot(q, (querySnapshot) => {
+      events.value = querySnapshot.docs.map((documentSnapshot) => {
+        return {...documentSnapshot.data(), id: documentSnapshot.id}
+      })
+    })
+
+    const snapshot = await getDocs(collection($fireDB, props.mentalModelsPath))
+    mentalModels.value = snapshot.docs.map(documentSnapshot => {
       return {...documentSnapshot.data(), id: documentSnapshot.id}
     })
-  })
+  } else {
+    console.error('No scenario provided')
+    bulmaToast.toast({
+      message: 'Scenario Error',
+      type: 'is-danger',
+      animate: {in: 'slideInRight', out: 'slideOutRight'}
+    })
+  }
 })
 </script>

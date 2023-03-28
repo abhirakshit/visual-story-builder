@@ -21,13 +21,13 @@
             <div class="box">
               <div class="columns">
                 <div class="column is-three-quarters">
-                  <h2 class="subtitle">Scenario Builder</h2>
+                  <h2 class="subtitle">Story Visualizer</h2>
                 </div>
-                <div class="column is-one-quarter">
-                  <button class="button m-1 is-outlined is-pulled-right" @click="showAddScenarioMenu()">
-                    <font-awesome-icon icon="plus"/>&nbsp;Add Scenario
-                  </button>
-                </div>
+<!--                <div class="column is-one-quarter">-->
+<!--                  <button class="button m-1 is-outlined is-pulled-right" @click="createNewScenario()">-->
+<!--                    <font-awesome-icon icon="plus"/>&nbsp;Add Scenario-->
+<!--                  </button>-->
+<!--                </div>-->
               </div>
               <div id="scenarios">
                 <div id="canvas" class="scenario-box"></div>
@@ -36,7 +36,10 @@
           </div>
           <div class="column is-half">
             <div class="box sticky-box">
-              <component :is="getMenuComponent()" v-bind="menuProps" @redraw="redraw"/>
+              <component :is="getMenuComponent()" v-bind="menuProps"
+                         @redraw="redraw"
+                         @showMentalModel="showMentalModel"
+                         @showScenario="showScenario"/>
             </div>
           </div>
         </div>
@@ -92,6 +95,16 @@ const getMenuComponent = () => {
   }
 }
 
+const showMentalModel = (scenario) => {
+  console.log('caught emit', scenario)
+  setupMentalStateEvent(scenario)
+}
+
+const showScenario = (scId) => {
+  console.log('caught emit', scId)
+  setupSelectedScenario(scId)
+}
+
 const redraw = () => {
   console.log('redraw')
   layer.removeChildren()
@@ -100,25 +113,47 @@ const redraw = () => {
 }
 
 const resetMenuComponent = () => {
+  console.log('reset', scenarios.value)
   currentMenuComponent.value = 'empty'
+  menuProps.value = {
+    'scenarios': scenarios.value,
+    'scenarioCollPath': `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios`
+  }
 }
+
+// const createNewScenario = async () => {
+//   await addDoc(
+//       collection($fireDB, `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios`),
+//       {
+//         title: 'New Scenario',
+//         description: 'New Scenario Description',
+//       }).then(function (docRef) {
+//         console.log("Document written with ID: ", docRef.id);
+//         setupSelectedScenario(docRef.id)
+//       })
+//       .catch(function (error) {
+//         console.error("Error adding document: ", error);
+//       });
+// }
 
 const setupSelectedScenario = (groupId, event) => {
   console.log("Group Selected", groupId)
   // Setup scenario as prop
-  let sc = scenarios.value.find((sc) => {
-    return sc.id == groupId
-  })
-  console.log('sc', sc)
-  menuProps.value = {
-    'scenario': sc,
-    'event': event,
-    'path': `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios/${groupId}`,
-    'mentalModelsPath': `users/${firebaseUser.value.uid}/mentalStateModels`,
+  if (groupId) {
+    let sc = scenarios.value.find((sc) => {
+      return sc.id == groupId
+    })
+    menuProps.value = {
+      'scenario': sc,
+      'event': event,
+      'path': `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios/${groupId}`,
+      'mentalModelsPath': `users/${firebaseUser.value.uid}/mentalStateModels`,
+    }
+    //change dynamic templates
+    currentMenuComponent.value = "scenario-menu"
+  } else {
+    throw new Error('No group id provided')
   }
-
-  //change dynamic templates
-  currentMenuComponent.value = "scenario-menu"
 }
 
 const setupSelectedEvent = (sc, groupId, event) => {
@@ -127,19 +162,17 @@ const setupSelectedEvent = (sc, groupId, event) => {
     'scenario': sc,
     'event': event,
     'path': `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios/${groupId}`
-
   }
 
   //change dynamic templates
   currentMenuComponent.value = "event-menu"
 }
 
-const setupMentalStateEvent = (sc, groupId) => {
-  console.log("Mental State Selected", groupId)
+const setupMentalStateEvent = (sc) => {
   menuProps.value = {
     'scenario': sc,
     'path': `users/${firebaseUser.value.uid}/mentalStateModels`,
-    'scenarioPath': `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios/${groupId}`
+    'scenarioPath': `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios/${sc.id}`
   }
 
   //change dynamic templates
@@ -186,10 +219,6 @@ const setupAddMenu = () => {
   });
 }
 
-const showAddScenarioMenu = () => {
-
-}
-
 const setupCanvas = () => {
   // first we need to create a stage
   const canvas = document.getElementById('canvas');
@@ -216,13 +245,14 @@ const setupData = async () => {
     scenarios.value = querySnapshot.docs.map((documentSnapshot) => {
       return {...documentSnapshot.data(), id: documentSnapshot.id}
     })
+    resetMenuComponent()
     setupScenarios()
   })
 }
 
 const getCanvasCenterX = () => {
   const canvas = document.getElementById('canvas');
-  return canvas.offsetWidth/2
+  return canvas.offsetWidth / 2
 }
 
 const getScale = () => {
@@ -251,40 +281,40 @@ const fitStageIntoParentContainer = () => {
   stage.scale({x: scale, y: scale});
 }
 
-const addScenarioToStage = async () => {
-  await addDoc(
-      collection($fireDB, `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios`),
-      {
-        title: 'New Scenario',
-        description: 'New Description',
-        events: [
-          {
-            id: 'evt1',
-            type: 'general',
-            description: 'Evt Desc',
-            timeline: 'past',
-          },
-          {
-            id: 'evt2',
-            type: 'catalysing',
-            description: 'Cat Evt Desc',
-            timeline: 'current'
-          }
-        ],
-        mentalState: {
-          id: 'ms',
-          title: 'Mental State',
-          description: '',
-        },
-        reaction: {id: 'rctn'},
-        connectors: [
-          {id: 'cid1', startTargetId: 'evt1', endTargetId: 'rctn', type: 'excitation'},
-          {id: 'cid2', startTargetId: 'evt2', endTargetId: 'rctn', type: 'catalysing'},
-          {id: 'cid3', startTargetId: 'rctn', endTargetId: 'ms', type: 'generation'},
-        ]
-      })
-  redraw();
-}
+// const addScenarioToStage = async () => {
+//   await addDoc(
+//       collection($fireDB, `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios`),
+//       {
+//         title: 'New Scenario',
+//         description: 'New Description',
+//         events: [
+//           {
+//             id: 'evt1',
+//             type: 'general',
+//             description: 'Evt Desc',
+//             timeline: 'past',
+//           },
+//           {
+//             id: 'evt2',
+//             type: 'catalysing',
+//             description: 'Cat Evt Desc',
+//             timeline: 'current'
+//           }
+//         ],
+//         mentalState: {
+//           id: 'ms',
+//           title: 'Mental State',
+//           description: '',
+//         },
+//         reaction: {id: 'rctn'},
+//         connectors: [
+//           {id: 'cid1', startTargetId: 'evt1', endTargetId: 'rctn', type: 'excitation'},
+//           {id: 'cid2', startTargetId: 'evt2', endTargetId: 'rctn', type: 'catalysing'},
+//           {id: 'cid3', startTargetId: 'rctn', endTargetId: 'ms', type: 'generation'},
+//         ]
+//       })
+//   redraw();
+// }
 // const scenarioGroupMapping = [];
 const getConnectorPoints = (from, to) => {
   // console.log({from, to})
@@ -318,14 +348,18 @@ const redrawArrows = (group, connectors) => {
   })
 }
 
-const getConnectorProps = (connector) => {
+const getConnectorProps = (type) => {
+  console.log('tt', type)
   let props = {}
-  switch (connector.type) {
+  switch (type) {
     case "Excitation":
-      props.color = 'black';
+      props.color = 'green';
       break;
     case "Catalysing":
       props.color = 'purple';
+      break;
+    case "Inhibition":
+      props.color = 'red';
       break;
     case "Generation":
       props.color = 'blue';
@@ -333,24 +367,54 @@ const getConnectorProps = (connector) => {
     default:
       props.color = 'black';
   }
-  console.log(props)
   return props
 }
 
-const setupEvents = async (scenario, group, borderGroupBox) => {
+// const getEventColor = (type) => {
+//   let color = 'black'
+//   switch (type) {
+//     case "Excitation":
+//       color = 'green';
+//       break;
+//     case "Catalysing":
+//       color = 'purple';
+//       break;
+//     case "Generation":
+//       props.color = 'blue';
+//       break;
+//     default:
+//       props.color = 'black';
+//   }
+//   return props
+// }
+
+const setupEvents = async (scenario, group, borderGroupBox, scCount) => {
   // let eventLocY = 50, eventLocX = 150
   let eventLocY = 0, eventLocX = 0
+
+  //Make sure consecutive scenarios start 100 pixels down
+  eventLocY += scCount*250
+
   let cnt = 0, connectorArr = [], events = []
-  const querySnapshot = await getDocs(query(collection($fireDB, `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios/${scenario.id}/events`)));
+  const querySnapshot = await getDocs(query(
+      collection($fireDB,
+          `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios/${scenario.id}/events`)
+      ));
   events = querySnapshot.docs.map((documentSnapshot) => {
     return {...documentSnapshot.data(), id: documentSnapshot.id}
   })
+  if (events.length == 0 || !scenario.mentalStateModelId) {
+    console.info('No events in scenario or no mental state associated')
+    return
+  }
+
   let reactionId = `rxn-${scenario.id}`
   // scenario.events.map((event) => {
   events.map((event) => {
     // get evt settings
     eventLocY += 50;
-    const eventColor = event.type == 'General' ? 'black' : 'purple'
+    // const eventColor = event.type == 'Excitation' ? 'black' : 'purple'
+    const eventColor = getConnectorProps(event.type).color
     let wedge = new Konva.Wedge({
       x: eventLocX,
       y: eventLocY,
@@ -376,7 +440,7 @@ const setupEvents = async (scenario, group, borderGroupBox) => {
 
     wedge.on('click', function (evt) {
       evt.cancelBubble = true;
-      console.log('Event Selected')
+      // console.log('Event Selected')
       setupSelectedScenario(group.id, event)
     })
 
@@ -384,7 +448,7 @@ const setupEvents = async (scenario, group, borderGroupBox) => {
     let connector = {
       startTargetId: event.id,
       endTargetId: reactionId,
-      type: event.type == 'General' ? 'Excitation' : 'Catalysing',
+      type: event.type,
       id: `cId-${cnt}-${scenario.id}`
     }
     connectorArr.push(connector)
@@ -437,8 +501,8 @@ const setupEvents = async (scenario, group, borderGroupBox) => {
   })
   circle.on('click', function (evt) {
     evt.cancelBubble = true;
-    console.log('Circle Selected')
-    setupMentalStateEvent(scenario, group.id)
+    console.log('Circle Selected', scenario)
+    setupMentalStateEvent(scenario)
   })
 
   // Create Connectors
@@ -457,7 +521,7 @@ const setupEvents = async (scenario, group, borderGroupBox) => {
 
   // Draw All Connectors
   connectorArr.map((connector) => {
-    let props = getConnectorProps(connector)
+    let props = getConnectorProps(connector.type)
     let arrow = new Konva.Arrow({
       stroke: props.color,
       id: connector.id,
@@ -481,16 +545,19 @@ const setupScenarios = () => {
   // console.log('Scenarios', scenarios.value)
   let scCount = 0
   scenarios.value.map((scenario) => {
+    if (!scenario.mentalStateModelId) {
+      console.log('No mental state model')
+      return
+    }
     // create scenario groups
     // console.log("x,y", getCanvasCenterX() - 60, 40 + (40*scCount))
     let group = new Konva.Group({
       x: getCanvasCenterX() - 60,
-      y: 40 + (40*scCount), // new scenarios should sit below prior ones
+      y: 40 + (40 * scCount), // new scenarios should sit below prior ones
       rotation: 0,
       draggable: true
     });
     group.id = scenario.id
-    scCount++;
 
     // setup default scenario details in the group
     let transformer = new Konva.Transformer();
@@ -500,7 +567,8 @@ const setupScenarios = () => {
 
     // Create the group border rect.
     const borderGroupBox = new GroupBorder(group, settings, transformer);
-    setupEvents(scenario, group, borderGroupBox)
+    setupEvents(scenario, group, borderGroupBox, scCount)
+    scCount++;
 
 // The group must call the moveBorder fn in any drag listener
     group.on('dragstart', function () {
@@ -561,11 +629,12 @@ const settings = {
   padding: 20,
   fill: 'transparent',
   opacity: 0.9,
-  stroke: 'black',
+  stroke: 'blue',
   strokeWidth: 1,
   visible: true,
   bgRectFill: 'transparent',  // <- change to 'lime' to see the background rect.
 }
+
 /*
 * This is the GroupBorder class which draws the border and makes the group draggable.
 * The constructor expects a Konva.Group, a plain JS object containing settings as per the example above, and the Konva.Transformer.
@@ -708,13 +777,13 @@ class GroupBorder {
     });
   }
 }
+
 // End of GroupBorder class
 
 onMounted(async () => {
-  // console.log('mounted')
   setupCanvas()
   await setupData()
-  // fitStageIntoParentContainer()
+  // resetMenuComponent()
 })
 </script>
 

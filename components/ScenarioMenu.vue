@@ -202,6 +202,8 @@ const addEvent = async () => {
         type: 'is-primary',
         animate: {in: 'slideInRight', out: 'slideOutRight'}
       })
+
+      emit('redraw')
     })
   } else {
     await addDoc(
@@ -213,6 +215,8 @@ const addEvent = async () => {
             type: 'is-primary',
             animate: {in: 'slideInRight', out: 'slideOutRight'}
           })
+
+          emit('redraw')
         })
   }
 }
@@ -235,6 +239,8 @@ const deleteEvent = async (eventId) => {
       type: 'is-primary',
       animate: {in: 'slideInRight', out: 'slideOutRight'}
     })
+
+    emit('redraw')
   });
 }
 

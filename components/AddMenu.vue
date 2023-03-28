@@ -3,7 +3,8 @@
     <div class="has-text-left">
       <h2 class="has-text-centered">Add Menu</h2>
       <button id="event">
-        <font-awesome-icon icon="triangle" /> Event
+<!--        <font-awesome-icon icon="triangle" /> -->
+        Event
       </button>
 <!--      <button id="event"><font-awesome-icon icon="square" /> Reaction</button>-->
 <!--      <button id="connection"><font-awesome-icon icon="arrow-right" /> Connection</button>-->

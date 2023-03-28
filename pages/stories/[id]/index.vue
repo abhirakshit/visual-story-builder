@@ -16,20 +16,6 @@
           </ul>
         </nav>
 
-        <!--        <div class="box">-->
-        <!--          <button class="button m-1 is-outlined">-->
-        <!--            <font-awesome-icon icon="circle" />-->
-        <!--            &nbsp;Event-->
-        <!--          </button>-->
-        <!--          <button class="button m-1 is-info is-outlined">-->
-        <!--            <font-awesome-icon icon="square" />&nbsp;Reaction</button>-->
-        <!--          <button class="button m-1 is-outlined">-->
-        <!--            <font-awesome-icon icon="arrow-right" />&nbsp;Connection</button>-->
-        <!--          <button class="button m-1 is-outlined">-->
-        <!--            <font-awesome-icon icon="circle" /> &nbsp;Mental Representation-->
-        <!--          </button>-->
-        <!--          <button id='toggleBorder'>Toggle border rect</button>-->
-        <!--        </div>-->
         <div class="columns">
           <div class="column is-half">
             <div class="box">
@@ -38,7 +24,7 @@
                   <h2 class="subtitle">Scenario Builder</h2>
                 </div>
                 <div class="column is-one-quarter">
-                  <button class="button m-1 is-outlined is-pulled-right" @click="addScenarioToStage">
+                  <button class="button m-1 is-outlined is-pulled-right" @click="showAddScenarioMenu()">
                     <font-awesome-icon icon="plus"/>&nbsp;Add Scenario
                   </button>
                 </div>
@@ -200,6 +186,10 @@ const setupAddMenu = () => {
   });
 }
 
+const showAddScenarioMenu = () => {
+
+}
+
 const setupCanvas = () => {
   // first we need to create a stage
   const canvas = document.getElementById('canvas');
@@ -328,20 +318,46 @@ const redrawArrows = (group, connectors) => {
   })
 }
 
-const setupEvents = (scenario, group, borderGroupBox) => {
+const getConnectorProps = (connector) => {
+  let props = {}
+  switch (connector.type) {
+    case "Excitation":
+      props.color = 'black';
+      break;
+    case "Catalysing":
+      props.color = 'purple';
+      break;
+    case "Generation":
+      props.color = 'blue';
+      break;
+    default:
+      props.color = 'black';
+  }
+  console.log(props)
+  return props
+}
+
+const setupEvents = async (scenario, group, borderGroupBox) => {
   // let eventLocY = 50, eventLocX = 150
   let eventLocY = 0, eventLocX = 0
-  let cnt = 0, connectorArr = []
-  scenario.events.map((event) => {
+  let cnt = 0, connectorArr = [], events = []
+  const querySnapshot = await getDocs(query(collection($fireDB, `users/${firebaseUser.value.uid}/stories/${route.params.id}/scenarios/${scenario.id}/events`)));
+  events = querySnapshot.docs.map((documentSnapshot) => {
+    return {...documentSnapshot.data(), id: documentSnapshot.id}
+  })
+  let reactionId = `rxn-${scenario.id}`
+  // scenario.events.map((event) => {
+  events.map((event) => {
     // get evt settings
     eventLocY += 50;
+    const eventColor = event.type == 'General' ? 'black' : 'purple'
     let wedge = new Konva.Wedge({
       x: eventLocX,
       y: eventLocY,
       radius: 20,
       angle: 65,
-      fill: 'yellow',
-      stroke: 'black',
+      fill: eventColor,
+      stroke: 'yellow',
       strokeWidth: 1,
       rotation: -120,
       draggable: 'true',
@@ -357,32 +373,23 @@ const setupEvents = (scenario, group, borderGroupBox) => {
       // redrawArrows(group, scenario.connectors)
       redrawArrows(group, connectorArr)
     })
+
     wedge.on('click', function (evt) {
       evt.cancelBubble = true;
       console.log('Event Selected')
       setupSelectedScenario(group.id, event)
-      // setupSelectedEvent(scenario, group.id, event)
     })
 
     // add connectors
     let connector = {
       startTargetId: event.id,
-      endTargetId: scenario.reaction.id,
+      endTargetId: reactionId,
       type: event.type == 'General' ? 'Excitation' : 'Catalysing',
-      id: 'cId' + cnt
+      id: `cId-${cnt}-${scenario.id}`
     }
     connectorArr.push(connector)
     cnt++
   })
-  // Add connector for reaction to state
-  connectorArr.push({
-    startTargetId: scenario.reaction.id,
-    endTargetId: scenario.mentalStateModelId,
-    type: 'Generation',
-    id: 'cId' + cnt
-  })
-  // allConnectors.value.push({scenarioId: scenario.id, connectorArr})
-
 
   //Create Reaction Box
   let rect = new Konva.Rect({
@@ -394,13 +401,20 @@ const setupEvents = (scenario, group, borderGroupBox) => {
     shadowBlur: 2,
     cornerRadius: 2,
     draggable: 'true',
-    id: scenario.reaction.id
+    id: reactionId
   });
   group.add(rect)
   rect.on('dragmove', function () {
     borderGroupBox.moveBorder()
     // redrawArrows(group, scenario.connectors)
     redrawArrows(group, connectorArr)
+  })
+  // Add connector for reaction to state
+  connectorArr.push({
+    startTargetId: reactionId,
+    endTargetId: scenario.mentalStateModelId,
+    type: 'Generation',
+    id: `cId-${cnt}-${scenario.id}`
   })
 
   //Create Mental State
@@ -443,16 +457,19 @@ const setupEvents = (scenario, group, borderGroupBox) => {
 
   // Draw All Connectors
   connectorArr.map((connector) => {
+    let props = getConnectorProps(connector)
     let arrow = new Konva.Arrow({
-      stroke: 'black',
+      stroke: props.color,
       id: connector.id,
-      fill: 'black',
+      fill: props.color,
       draggable: 'false'
     });
     //add to group
     group.add(arrow);
   })
+
   redrawArrows(group, connectorArr)
+  borderGroupBox.moveBorder()
 }
 
 const setupScenarios = () => {

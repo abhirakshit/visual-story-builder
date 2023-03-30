@@ -194,15 +194,15 @@ import {doc, deleteDoc, updateDoc, getDoc, addDoc, collection, query, onSnapshot
 import * as bulmaToast from "bulma-toast";
 
 const {$fireDB} = useNuxtApp()
-const emit = defineEmits(['redraw', 'showMentalModel']);
+const emit = defineEmits(['redraw', 'redrawReselectScenario', 'showMentalModel']);
 const props = defineProps(['scenario', 'path', 'mentalModelsPath', 'event', 'scenarioCollPath'])
 const showEditForm = ref(false)
 const showAddEvent = ref(false)
 const showReplaceForm = ref(false)
 const eventData = ref({type: '', description: ''})
 const mentalModel = ref({title: '', description: ''})
-const selectedModelId = ref({});
-const mentalModels = ref()
+const selectedModelId = ref('');
+const mentalModels = ref([])
 const schema = [
   {
     $formkit: "text",
@@ -229,12 +229,15 @@ const getEventTagColor = (type) => {
     case 'Excitation':
       return 'is-success';
     case 'Catalysing':
-      return 'is-primary';
+      return 'is-warning';
     case 'Inhibition':
       return 'is-danger';
   }
 }
 
+const resetEventDataValue = () => {
+  eventData.value = {description: '', timeline: '', type: ''}
+}
 const addEvent = async () => {
   bulmaToast.toast({
     message: 'Adding/Updating Event',
@@ -251,8 +254,8 @@ const addEvent = async () => {
         type: 'is-primary',
         animate: {in: 'slideInRight', out: 'slideOutRight'}
       })
-
-      emit('redraw')
+      resetEventDataValue()
+      emit('redrawReselectScenario', props.scenario)
     })
   } else {
     await addDoc(
@@ -264,8 +267,8 @@ const addEvent = async () => {
             type: 'is-primary',
             animate: {in: 'slideInRight', out: 'slideOutRight'}
           })
-
-          emit('redraw')
+          resetEventDataValue()
+          emit('redrawReselectScenario', props.scenario)
         })
   }
 }
@@ -295,7 +298,7 @@ const deleteEvent = async (eventId) => {
 
 const isSelectedEvent = (eventId) => {
   if (props.event && props.event.id == eventId)
-    return 'has-text-primary'
+    return 'has-text-primary-dark'
 }
 
 const handleSubmit = async () => {
@@ -351,14 +354,19 @@ const replaceModel = async () => {
 
 onMounted(async () => {
   if (props.scenario) {
+    console.log(props.scenario)
     data.value = {
       title: props.scenario.title,
       description: props.scenario.description,
     }
 
-    const docSnap = await getDoc(doc($fireDB, `${props.mentalModelsPath}/${props.scenario.mentalStateModelId}`))
-    mentalModel.value = docSnap.data()
+    // Scenario Mental Model
+    if (props.scenario.mentalStateModelId) {
+      const docSnap = await getDoc(doc($fireDB, `${props.mentalModelsPath}/${props.scenario.mentalStateModelId}`))
+      mentalModel.value = docSnap.data()
+    }
 
+    // Events
     const q = query(collection($fireDB, `${props.path}/events`))
     await onSnapshot(q, (querySnapshot) => {
       events.value = querySnapshot.docs.map((documentSnapshot) => {
@@ -366,6 +374,7 @@ onMounted(async () => {
       })
     })
 
+    // All Mental Models
     const snapshot = await getDocs(collection($fireDB, props.mentalModelsPath))
     mentalModels.value = snapshot.docs.map(documentSnapshot => {
       return {...documentSnapshot.data(), id: documentSnapshot.id}

@@ -39,6 +39,7 @@
               <component :is="getMenuComponent()" v-bind="menuProps"
                          @redraw="redraw"
                          @showMentalModel="showMentalModel"
+                         @redrawReselectScenario="redrawReselectScenario"
                          @showScenario="showScenario"/>
             </div>
           </div>
@@ -67,7 +68,7 @@ const allConnectors = ref([
   {scenarioId: '', connectors: []}
 ])
 let sceneWidth = 1000;
-let sceneHeight = 500;
+let sceneHeight = 800;
 let stage, layer;
 
 const menuProps = ref();
@@ -93,6 +94,11 @@ const getMenuComponent = () => {
     default:
       return EmptyMenu
   }
+}
+
+const redrawReselectScenario = (scenario) => {
+  redraw()
+  setupSelectedScenario(scenario.id)
 }
 
 const showMentalModel = (scenario) => {

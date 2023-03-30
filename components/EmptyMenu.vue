@@ -28,7 +28,7 @@
 </template>
 <script setup>
 import {addDoc, collection} from "firebase/firestore";
-
+const {$fireDB} = useNuxtApp()
 const emit = defineEmits(['showScenario']);
 const props = defineProps(['scenarios', 'scenarioCollPath'])
 const setupInComplete = (sc) => {

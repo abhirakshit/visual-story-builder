@@ -19,7 +19,7 @@
       <div class="container">
         <div class="columns">
           <div class="column is-three-quarters">
-            <div class="columns">
+            <div class="columns is-multiline">
               <div class="column is-one-third" v-for="story in stories">
                   <div class="card">
                     <div class="card-header">
@@ -48,7 +48,6 @@
                       </div>
                     </div>
                   </div>
-
               </div>
             </div>
           </div>

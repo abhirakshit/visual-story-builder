@@ -383,6 +383,7 @@
 
     <!--    View Details-->
     <div v-else>
+<!--      <h1 class="title">Mental State Model</h1>-->
       <span class="subtitle">{{ mentalModel.title }}</span>
       <a class="is-pulled-right icon has-text-danger" @click="showReplaceForm=!showReplaceForm">
         <i class="fas fa-retweet"></i>
@@ -518,9 +519,9 @@ const handleSubmit = async () => {
           message: 'Successfully updated mental model.', type: 'is-success',
           animate: {in: 'slideInRight', out: 'slideOutRight'}
         })
-        emit('redraw')
+        // emit('redraw')
+        emit('redrawReselectScenario', props.scenario)
       });
-  emit('redraw')
 };
 
 const replaceModel = async () => {

@@ -7,6 +7,6 @@ The online visual story builder is a sub-project of a larger undertaking, namely
 ## Project Requirements
 - Google Firebase Account: Please create a [Google Firebase](https://firebase.google.com/) Account to access the 
 firebase hosting and firestore nosql database
-- 
+
 
 

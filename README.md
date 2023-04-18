@@ -1,42 +1,12 @@
-# Nuxt 3 Minimal Starter
+# Indra's Net Story Builder
+Understanding the human mind and its complexities is a challenging endeavor. 
+Digital visualizations have been utilized to make sense of complex data in various fields, but their application to the study of human cognition and emotions remains relatively unexplored. 
+The online visual story builder is a sub-project of a larger undertaking, namely [Indra's Net Visualizer](https://github.com/abhirakshit/Indras-Net), which aims to create immersive 3D visualizations of mental models using game development platforms.
 
-Look at the [Nuxt 3 documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
 
-## Setup
+## Project Requirements
+- Google Firebase Account: Please create a [Google Firebase](https://firebase.google.com/) Account to access the 
+firebase hosting and firestore nosql database
+- 
 
-Make sure to install the dependencies:
 
-```bash
-# yarn
-yarn install
-
-# npm
-npm install
-
-# pnpm
-pnpm install
-```
-
-## Development Server
-
-Start the development server on http://localhost:3000
-
-```bash
-npm run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-npm run build
-```
-
-Locally preview production build:
-
-```bash
-npm run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
